@@ -58,10 +58,12 @@ async function handler(request: Request, context: Context): Promise<Response> {
     return await botCall("setMessageReaction", {
       chat_id: msg.chat.id,
       message_id: msg.message_id,
-      reaction: {
-        type: "emoji",
-        emoji, // https://core.telegram.org/bots/api#reactiontypeemoji
-      },
+      reaction: [
+        {
+          type: "emoji",
+          emoji, // https://core.telegram.org/bots/api#reactiontypeemoji
+        },
+      ],
     });
   };
 
