@@ -27,16 +27,30 @@ async function handler(request: Request, context: Context): Promise<Response> {
   const sql = neon();
 
   const botCall = async (endpoint: string, body: any) => {
-    return await fetch(
-      `https://api.telegram.org/bot${process.env.TELEGRAM_GM_BOT_TOKEN}/${endpoint}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
+    try {
+      const res = await fetch(
+        `https://api.telegram.org/bot${process.env.TELEGRAM_GM_BOT_TOKEN}/${endpoint}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        }
+      );
+      if (!res.ok) {
+        console.error(
+          "ERROR Response from Telegram API",
+          endpoint,
+          res.status,
+          res.statusText,
+          await res.text()
+        );
       }
-    );
+      return res;
+    } catch (err) {
+      console.error("ERROR Calling Telegram API", endpoint, err);
+    }
   };
 
   const react = async (emoji: string) => {
