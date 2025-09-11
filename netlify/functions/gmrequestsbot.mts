@@ -20,28 +20,47 @@ async function handler(request: Request, context: Context): Promise<Response> {
     return response;
   }
   const isAdmin = username === process.env.TELEGRAM_GM_BOT_ADMIN_USER;
-  let txt: string = (msg.text || "").slice(0, 50);
+  let txt: string = (msg.text || "")
+    .replaceAll("@GmRequestsBot", "")
+    .slice(0, 50);
 
   const sql = neon();
 
-  const reply = async (text: string) => {
-    const res = await fetch(
-      `https://api.telegram.org/bot${process.env.TELEGRAM_GM_BOT_TOKEN}/sendMessage`,
+  const botCall = async (endpoint: string, body: any) => {
+    return await fetch(
+      `https://api.telegram.org/bot${process.env.TELEGRAM_GM_BOT_TOKEN}/${endpoint}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          chat_id: msg.chat.id,
-          text,
-          parse_mode: "MarkdownV2",
-          reply_parameters: {
-            message_id: msg.message_id,
-          },
-        }),
+        body: JSON.stringify(body),
       }
     );
+  };
+
+  const react = async (emoji: string) => {
+    // https://core.telegram.org/bots/api#setmessagereaction
+    return await botCall("setMessageReaction", {
+      chat_id: msg.chat.id,
+      message_id: msg.message_id,
+      reaction: {
+        type: "emoji",
+        emoji, // https://core.telegram.org/bots/api#reactiontypeemoji
+      },
+    });
+  };
+
+  const reply = async (text: string) => {
+    // https://core.telegram.org/bots/api#sendmessage
+    return await botCall("sendMessage", {
+      chat_id: msg.chat.id,
+      text,
+      parse_mode: "MarkdownV2",
+      reply_parameters: {
+        message_id: msg.message_id,
+      },
+    });
   };
 
   if (txt.startsWith("/gmrequest")) {
@@ -54,7 +73,7 @@ async function handler(request: Request, context: Context): Promise<Response> {
       try {
         await sql`UPDATE gm_requests SET request = ${txt} WHERE id = ${msg.message_id} AND username = ${username}`;
         console.log("UPDATED REQUEST", msg.message_id, username, txt);
-        await reply(`Actualizado 🙃 \\(\\=${msg.message_id}\\)`);
+        await react("👌");
       } catch (err) {
         console.error(
           "ERROR UPDATING REQUEST",
@@ -63,14 +82,14 @@ async function handler(request: Request, context: Context): Promise<Response> {
           txt,
           err
         );
-        await reply(`Error ☠️`);
+        await react("👻");
         return response;
       }
     } else {
       try {
         await sql`INSERT INTO gm_requests (id, username, request) VALUES (${msg.message_id}, ${username}, ${txt})`;
         console.log("INSERTED REQUEST", msg.message_id, username, txt);
-        await reply(`Listo 😬 \\(\\+${msg.message_id}\\)`);
+        await react("👍");
       } catch (err) {
         console.error(
           "ERROR INSERTING REQUEST",
@@ -79,7 +98,7 @@ async function handler(request: Request, context: Context): Promise<Response> {
           txt,
           err
         );
-        await reply(`Error ☠️`);
+        await react("👻");
         return response;
       }
     }
@@ -98,12 +117,12 @@ async function handler(request: Request, context: Context): Promise<Response> {
           console.log("DELETED ALL REQUESTS!", "BY", username);
         } catch (err) {
           console.error("ERROR DELETING REQUESTS", "BY", username, err);
-          await reply(`Error ☠️`);
+          await react("👻");
           return response;
         }
-        await reply("Todo limpio 🧹");
+        await react("🔥");
       } else {
-        await reply("🖕");
+        await react("🖕");
       }
       return response;
     }
@@ -118,7 +137,7 @@ async function handler(request: Request, context: Context): Promise<Response> {
     }
     msgUsername = (msgUsername || "").replaceAll("@", "");
     if (msgUsername && msgUsername !== username && !isAdmin) {
-      await reply(`Si no es tuyo, no lo toques! 😤`);
+      await react("🖕");
       return response;
     }
     try {
@@ -135,21 +154,21 @@ async function handler(request: Request, context: Context): Promise<Response> {
         username,
         err
       );
-      await reply(`Error ☠️`);
+      await react("👻");
       return response;
     }
-    await reply(`Eliminado 😶‍🌫 \\(\\-\`${msgId}\`\\)`);
+    await react("🔥");
   } else if (txt.startsWith("/gmlist")) {
     let rows: { [key: string]: any }[] = [];
     try {
       rows = await sql`SELECT * FROM gm_requests ORDER BY id ASC LIMIT 50`;
     } catch (err) {
       console.error("ERROR GETTING REQUESTS", username);
-      await reply(`Error ☠️`);
+      await react("👻");
       return response;
     }
     if (!rows.length) {
-      await reply("No requests 🥱");
+      await react("🤷‍♂");
     } else {
       await reply(
         rows
