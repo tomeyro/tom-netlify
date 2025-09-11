@@ -55,6 +55,9 @@ async function handler(request: Request, context: Context): Promise<Response> {
 
   const react = async (emoji: string) => {
     // https://core.telegram.org/bots/api#setmessagereaction
+    if (emoji !== "👀") {
+      await react("👀");
+    }
     return await botCall("setMessageReaction", {
       chat_id: msg.chat.id,
       message_id: msg.message_id,
