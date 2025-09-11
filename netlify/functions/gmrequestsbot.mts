@@ -191,7 +191,7 @@ async function handler(request: Request, context: Context): Promise<Response> {
     } else {
       await reply(
         rows
-          .map((r) => `\\- \\[\`${r.id}\`\\] \`@${r.username}\`: ${r.request}`)
+          .map((r) => `\\- \`${r.id} @${r.username}\`: ${r.request}`)
           .join("\n")
       );
     }
