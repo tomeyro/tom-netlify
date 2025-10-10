@@ -74,7 +74,7 @@ async function handler(request: Request, context: Context): Promise<Response> {
     // https://core.telegram.org/bots/api#sendmessage
     return await botCall("sendMessage", {
       chat_id: msg.chat.id,
-      text,
+      text: text.replace(new RegExp("([_*[\\]()~`>#+-=|{}.!])", "g"), "\\$1"),
       parse_mode: "MarkdownV2",
       reply_parameters: {
         message_id: msg.message_id,
