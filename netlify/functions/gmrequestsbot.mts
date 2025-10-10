@@ -190,9 +190,7 @@ async function handler(request: Request, context: Context): Promise<Response> {
       await react("🤷‍♂");
     } else {
       await reply(
-        rows
-          .map((r) => `\\- \`${r.id} @${r.username}\`: ${r.request}`)
-          .join("\n")
+        rows.map((r) => `· \`${r.id} @${r.username}\`: ${r.request}`).join("\n")
       );
     }
   }
