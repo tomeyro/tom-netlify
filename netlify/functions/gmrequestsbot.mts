@@ -74,12 +74,16 @@ async function handler(request: Request, context: Context): Promise<Response> {
     // https://core.telegram.org/bots/api#sendmessage
     return await botCall("sendMessage", {
       chat_id: msg.chat.id,
-      text: text.replace(new RegExp("([_*[\\]()~`>#+-=|{}.!])", "g"), "\\$1"),
+      text,
       parse_mode: "MarkdownV2",
       reply_parameters: {
         message_id: msg.message_id,
       },
     });
+  };
+
+  const escapeText = (text: string) => {
+    return text.replace(new RegExp("([_*[\\]()~`>#+-=|{}.!])", "g"), "\\$1");
   };
 
   if (txt.startsWith("/gmrequest")) {
@@ -190,7 +194,9 @@ async function handler(request: Request, context: Context): Promise<Response> {
       await react("🤷‍♂");
     } else {
       await reply(
-        rows.map((r) => `· \`${r.id} @${r.username}\`: ${r.request}`).join("\n")
+        rows
+          .map((r) => `· \`${r.id} @${r.username}\`: ${escapeText(r.request)}`)
+          .join("\n")
       );
     }
   }
